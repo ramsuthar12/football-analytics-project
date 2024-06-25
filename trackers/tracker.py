@@ -159,7 +159,8 @@ class Tracker:
 
             #Drawing the ellipse for the players
             for track_id, player in player_dict.items():
-                frame = self.draw_ellipse(frame, player["bbox"], (248, 255, 36), track_id)
+                color = player.get("team_color", (248, 255, 36))
+                frame = self.draw_ellipse(frame, player["bbox"], color, track_id)
 
             #Drawing the ellipse for the referees
             for _, referee in referee_dict.items():
