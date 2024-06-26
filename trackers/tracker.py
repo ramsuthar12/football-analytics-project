@@ -2,6 +2,7 @@ from ultralytics import YOLO  # type: ignore
 import supervision as sv # type: ignore
 import pickle
 import numpy as np
+import pandas as pd
 import os
 import cv2 # type: ignore
 import sys 
@@ -12,6 +13,19 @@ class Tracker:
     def __init__(self, model_path):
         self.model = YOLO(model_path)
         self.tracker = sv.ByteTrack()
+
+    def interpolate_ball_position(self, ball_positions):
+        # ball_positions = [x.get(1,{}).get("bbox",[]) for x in ball_positions]
+        ball_positions = [x[key].get("bbox", []) if x else [] for x in ball_positions for key in (x if x else [None])]
+        df_ball_positions = pd.DataFrame(ball_positions, columns=['x1','y1','x2','y2'])
+
+        # return df_ball_positions
+        df_ball_positions = df_ball_positions.interpolate()
+        df_ball_positions = df_ball_positions.bfill()
+
+        ball_positions = [{1: {"bbox":x}} for x in df_ball_positions.to_numpy().tolist()]
+
+        return ball_positions
 
     def detect_frames(self, frames):
         batch_size = 20
@@ -27,6 +41,8 @@ class Tracker:
         if read_from_stub and stub_path is not None and os.path.exists(stub_path):
             with open(stub_path,'rb') as f:
                 tracks = pickle.load(f)
+
+            print("tracks are retured from stubs")
             return tracks
 
         detections = self.detect_frames(frames)
@@ -79,6 +95,7 @@ class Tracker:
             with open(stub_path,'wb') as f :
                 pickle.dump(tracks,f)
 
+        print("new tracks created and returned")
         return tracks
 
     def draw_ellipse(self, frame, bound_box, color, track_id = None):
@@ -128,7 +145,6 @@ class Tracker:
             )
 
         return frame
-    
 
     def draw_triangle(self, frame, bound_box, color):
         y = int(bound_box[1])
@@ -144,8 +160,6 @@ class Tracker:
         cv2.drawContours(frame, [triangle_points], 0, (0,0,0), 2)
 
         return frame
-
-
 
     def draw_anotations(self, video_frames, tracks):
         output_video_frames = []
