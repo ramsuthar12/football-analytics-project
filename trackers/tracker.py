@@ -164,7 +164,7 @@ class Tracker:
         #Drawing a semi-transparent rectange to show the ball position of each team 
         overlay = frame.copy()
         cv2.rectangle(overlay, (1350, 850), (1900, 970), (0,0,0), cv2.FILLED)
-        alpha = 0.5
+        alpha = 0.6
         cv2.addWeighted(overlay, alpha, frame, 1-alpha, 0, frame)
 
         team_ball_position_till_the_frame = team_ball_position[:frame_num + 1]
