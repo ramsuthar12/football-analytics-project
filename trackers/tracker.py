@@ -15,8 +15,8 @@ class Tracker:
         self.tracker = sv.ByteTrack()
 
     def interpolate_ball_position(self, ball_positions):
-        # ball_positions = [x.get(1,{}).get("bbox",[]) for x in ball_positions]
-        ball_positions = [x[key].get("bbox", []) if x else [] for x in ball_positions for key in (x if x else [None])]
+        ball_positions = [x.get(1,{}).get("bbox",[]) for x in ball_positions]
+        # ball_positions = [x[key].get("bbox", []) if x else [] for x in ball_positions for key in (x if x else [None])]
         df_ball_positions = pd.DataFrame(ball_positions, columns=['x1','y1','x2','y2'])
 
         # return df_ball_positions
@@ -56,7 +56,6 @@ class Tracker:
         for frame_num, detection in enumerate(detections):
             cls_names = detection.names
             cls_names_inv = {v:k for k,v in cls_names.items()}
-            print(cls_names)
 
             #convert to supervision detection format
             detection_supervision = sv.Detections.from_ultralytics(detection)
@@ -89,7 +88,7 @@ class Tracker:
                 cls_id = frame_detection[3]
 
                 if cls_id == cls_names_inv['ball']:
-                    tracks["ball"][frame_num][track_id] = {"bbox":bound_box}
+                    tracks["ball"][frame_num][1] = {"bbox":bound_box}
         
         if stub_path is not None:
             with open(stub_path,'wb') as f :
@@ -175,6 +174,10 @@ class Tracker:
             for track_id, player in player_dict.items():
                 color = player.get("team_color", (248, 255, 36))
                 frame = self.draw_ellipse(frame, player["bbox"], color, track_id)
+
+                #Drawing marker for the player with the ball 
+                if player.get("has_ball", False):
+                    frame = self.draw_triangle(frame, player["bbox"], (0,0,255))
 
             #Drawing the ellipse for the referees
             for _, referee in referee_dict.items():
