@@ -160,7 +160,28 @@ class Tracker:
 
         return frame
 
-    def draw_anotations(self, video_frames, tracks):
+    def draw_team_ball_position(self, frame , frame_num , team_ball_position):
+        #Drawing a semi-transparent rectange to show the ball position of each team 
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (1350, 850), (1900, 970), (0,0,0), cv2.FILLED)
+        alpha = 0.5
+        cv2.addWeighted(overlay, alpha, frame, 1-alpha, 0, frame)
+
+        team_ball_position_till_the_frame = team_ball_position[:frame_num + 1]
+
+        #Calculating ball percentage
+        team_1_num_frames = team_ball_position_till_the_frame[team_ball_position_till_the_frame == 1].shape[0]
+        team_2_num_frames = team_ball_position_till_the_frame[team_ball_position_till_the_frame == 2].shape[0]
+
+        team_1 = team_1_num_frames/(team_1_num_frames + team_2_num_frames)
+        team_2 = team_2_num_frames/(team_1_num_frames + team_2_num_frames)
+
+        cv2.putText(frame, f"Team 1 Ball Position : {team_1 * 100:.2f}%", (1400,900), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        cv2.putText(frame, f"Team 2 Ball Position : {team_2 * 100:.2f}%", (1400,950), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+
+        return frame
+
+    def draw_anotations(self, video_frames, tracks, team_ball_position):
         output_video_frames = []
 
         for frame_num, frame in enumerate(video_frames):
@@ -187,6 +208,10 @@ class Tracker:
             for track_id, ball in ball_dict.items():
                 frame = self.draw_triangle(frame, ball["bbox"], (0,255,0))
             
+
+            #Drawing Ball Position for each team
+            frame = self.draw_team_ball_position(frame, frame_num, team_ball_position)
+
             output_video_frames.append(frame)
 
         return output_video_frames
