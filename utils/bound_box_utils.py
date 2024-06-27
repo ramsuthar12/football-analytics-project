@@ -4,3 +4,6 @@ def get_bound_box_centre(bound_box):
 
 def bound_box_width(bound_box):
     return bound_box[2] - bound_box[0]
+
+def measure_distance(p1, p2):
+    return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
