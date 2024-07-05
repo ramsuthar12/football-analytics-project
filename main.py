@@ -4,6 +4,7 @@ import cv2 # type: ignore
 import numpy as np
 from team_assigner import TeamAssigner
 from player_ball_assigner import PlayerBallAssigner
+from camera_movement_estimator import CameraMovementEstimator
 
 def main():
     #read video
@@ -13,16 +14,14 @@ def main():
     tracker = Tracker('models/best.pt')
     tracks = tracker.get_object_tracker(video_frames, read_from_stub=True, stub_path='stubs/track_stubs_2.pkl')
 
-    # Save the croped image of a player
-    # for track_id, player in tracks['players'][0].items():
-    #     bound_box = player['bbox']
-    #     frame = video_frames[0]
+    #Get object positions
+    tracker.add_position_to_tracks(tracks)
 
-    #     cropped_image = frame[int(bound_box[1]) : int(bound_box[3]), int(bound_box[0]) : int(bound_box[2])]
+    #Camera movement estimator
+    camera_movement_estimator = CameraMovementEstimator(video_frames[0])
+    camera_movement_per_frame = camera_movement_estimator.get_camera_movement(video_frames, read_from_stubs=True, stubs_path='stubs/camera_movement_stub.pkl')
 
-    #     #save the croped image
-    #     cv2.imwrite(f'output_videos/cropped_image.jpg', cropped_image)
-    #     break
+    camera_movement_estimator.add_adjust_position_to_tracks(tracks, camera_movement_per_frame)
 
     #Interpolate ball positions 
     tracks["ball"] = tracker.interpolate_ball_position(tracks["ball"])
@@ -37,7 +36,7 @@ def main():
 
             tracks["players"][frame_num][player_id]['team'] = team
             tracks["players"][frame_num][player_id]['team_color'] = team_assigner.team_colors[team]
-
+    
 
     #Assigning the player with the ball
     player_assigner = PlayerBallAssigner()
@@ -57,6 +56,9 @@ def main():
 
     # Draw object tracker
     output_video_frames = tracker.draw_anotations(video_frames, tracks, team_ball_position)
+
+    #Draw camera movement
+    output_video_frames = camera_movement_estimator.draw_camera_movement(output_video_frames, camera_movement_per_frame)
 
     #save video
     save_video(output_video_frames, 'output_videos/output_video.avi')
