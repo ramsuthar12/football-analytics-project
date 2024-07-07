@@ -1,5 +1,3 @@
-## README.md
-
 # Football Analytics Project
 
 ## Introduction
